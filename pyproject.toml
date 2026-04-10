@@ -38,7 +38,7 @@ classifiers = [
 
 [project.optional-dependencies]
 sso = [
-    "pyOpenSSL<24.3.0",
+    "pyOpenSSL",
     "lxml",
 ]
 

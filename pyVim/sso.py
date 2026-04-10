@@ -20,6 +20,8 @@ else:
     from cgi import escape
 #Third-party imports.
 from lxml import etree
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import padding
 from OpenSSL import crypto
 import ssl
 
@@ -790,7 +792,20 @@ def _sign(private_key, data, digest=SHA256):
     # Convert private key in arbitrary format into DER (DER is binary format
     # so we get rid of \n / \r\n differences, and line breaks in PEM).
     pkey = _load_private_key(_extract_certificate(private_key))
-    return base64.b64encode(crypto.sign(pkey, data.encode(UTF_8), digest))
+    crypto_key = pkey.to_cryptography_key()
+    if digest == SHA256:
+        hash_alg = hashes.SHA256()
+    elif digest == SHA512:
+        hash_alg = hashes.SHA512()
+    else:
+        raise ValueError("Unsupported digest algorithm: %s" % digest)
+
+    signed = crypto_key.sign(
+        data.encode(UTF_8),
+        padding.PKCS1v15(),
+        hash_alg
+    )
+    return base64.b64encode(signed)
 
 
 def _canonicalize(xml_string):
